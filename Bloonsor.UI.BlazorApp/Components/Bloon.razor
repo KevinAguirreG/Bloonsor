@@ -1,0 +1,49 @@
+﻿@using Bloonsor.UI.BlazorApp.Model
+
+@if(Balloon is not null)
+{
+	<img src="@balloonImage" 
+	style="position:absolute;top:@(Balloon.PositionTop)px;left:@(Balloon.PositionLeft)px;" 
+	@onclick="Pop"
+	/>
+
+}
+
+@code{
+	[Parameter]
+	public Balloon? Balloon { get; set; }
+	[Parameter]
+	public EventCallback<Balloon> BalloonPopped { get; set; }
+
+	private string? balloonImage;
+
+	private static string[] BalloonImages = {
+		"/Images/balloon1.png",
+		"/Images/balloon2.png",
+		"/Images/balloon3.png"
+	};
+	public void Pop()
+	{
+		balloonImage = "/Images/popped.png";
+		InvokeAsync(StateHasChanged);
+
+		Task.Delay(300).ContinueWith(_ =>
+		{
+			var random = new Random();
+			balloonImage = BalloonImages[random.Next(BalloonImages.Length)];
+
+			InvokeAsync(() =>
+			{
+				BalloonPopped.InvokeAsync(Balloon);
+				StateHasChanged(); 
+			});
+		});
+
+	}
+
+	protected override void OnInitialized()
+	{
+		var random = new Random();
+		balloonImage = BalloonImages[random.Next(BalloonImages.Length)];
+	}
+}

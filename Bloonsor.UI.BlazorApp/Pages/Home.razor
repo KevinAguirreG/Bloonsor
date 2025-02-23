@@ -1,0 +1,104 @@
+﻿@page "/"
+@using Bloonsor.UI.BlazorApp.Components
+@using Bloonsor.UI.BlazorApp.Model
+@using System.Timers
+@implements IDisposable
+
+
+<div class="game-container">
+    <h3>Balloons Popped: @poppedCount</h3>
+    <button @onclick="Redraw" class="redraw-button">Redraw</button>
+
+    @foreach (var Balloon in Balloons)
+    {
+        <Bloon Balloon="Balloon" BalloonPopped="OnBalloonPopped"></Bloon>
+    }
+</div>
+
+@code
+{
+    private IList<Balloon>? Balloons { get; set; } = new List<Balloon>();
+    private Timer? timer; 
+    private int poppedCount = 0;
+
+    protected override Task OnInitializedAsync()
+    {
+        StartRandomBalloonTimer();
+
+        return base.OnInitializedAsync();
+    }
+
+    private void StartRandomBalloonTimer()
+    {
+        var random = new Random();
+        var randomInterval = random.Next(1500, 5000); // Random time between 1.5s and 5s
+
+        timer = new Timer(randomInterval);
+        timer.Elapsed += TimerElapsed;
+        timer.Start();
+    }
+
+    private void TimerElapsed(object? sender, ElapsedEventArgs e){
+
+        if(Balloons?.Count < 10){
+            addBalloon();
+            InvokeAsync(StateHasChanged);
+            StartRandomBalloonTimer();
+        }else{
+            timer?.Stop();
+        }
+
+    }
+
+    private void Redraw()
+    {
+        Balloons?.Clear();
+        poppedCount = 0;
+        StartRandomBalloonTimer();
+    }
+
+    private void OnBalloonPopped(Balloon poppedBalloon)
+    {
+        Balloons?.Remove(poppedBalloon);
+        poppedCount++;
+        StateHasChanged();
+        if(Balloons?.Count < 10)
+        {
+            addBalloon();
+        }
+    }
+
+    private void addBalloon(){
+        var random = new Random();
+        var top = random.Next(500);
+        var left = random.Next(1000);
+        Balloons?.Add(new Balloon
+            {
+                PositionLeft = left,
+                PositionTop = top
+            });
+    }
+    // private void RenderBalloons()
+    // {
+    //     var random = new Random();
+    //     Balloons = new List<Balloon>();
+
+    //     for(int i = 0; i < 10; i++){
+    //         var top = random.Next(500);
+    //         var left = random.Next(1000);
+
+    //         Balloons.Add(new Balloon
+    //             {
+    //                 PositionLeft = left,
+    //                 PositionTop = top
+    //             });
+    //     }
+        
+    // }
+
+    public void Dispose()
+    {
+        timer?.Stop(); // Stop the timer if it is running
+        timer?.Dispose(); // Dispose of the timer resources
+    }
+}
